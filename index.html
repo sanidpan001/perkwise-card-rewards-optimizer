@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PerkWise — Credit Card Rewards Calculator | Best Card for Your Spending</title>
+<meta name="description" content="PerkWise is a free credit card rewards calculator: set your monthly spend per category, compare earn rates, see if an annual fee is worth it, and find your best 2-card combo. No signup.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: { ink: '#141126', perk: '#B48CFF', mint: '#5CF2C7', panel: '#1C1930' },
+      fontFamily: { display: ['"Segoe UI"', 'system-ui', 'sans-serif'] }
+    }
+  }
+};
+</script>
+<style>
+  body { background:#141126; }
+  .glass { background:rgba(255,255,255,.04); border:1px solid rgba(180,140,255,.18); }
+  .glow-text { text-shadow:0 0 28px rgba(180,140,255,.45); }
+  /* spend sliders */
+  input[type=range].perk-range { -webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:9999px;
+    background:linear-gradient(90deg,#B48CFF var(--fill,50%), rgba(255,255,255,.12) var(--fill,50%)); outline:none; }
+  input[type=range].perk-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:22px; height:22px; border-radius:50%;
+    background:#5CF2C7; border:3px solid #141126; box-shadow:0 0 0 2px #5CF2C7, 0 4px 14px rgba(92,242,199,.5); cursor:pointer; }
+  input[type=range].perk-range::-moz-range-thumb { width:20px; height:20px; border-radius:50%; background:#5CF2C7;
+    border:3px solid #141126; box-shadow:0 0 0 2px #5CF2C7; cursor:pointer; }
+  /* fanned wallet */
+  .fan-stage { position:relative; height:290px; }
+  .fan-card { position:absolute; left:50%; top:34px; width:224px; height:142px; margin-left:-112px;
+    transform-origin:50% 260%; transition:transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .3s; cursor:pointer; }
+  .fan-card:hover { z-index:50 !important; }
+  .fan-card.selected { box-shadow:0 0 0 3px #5CF2C7, 0 18px 44px rgba(92,242,199,.25); }
+  .cc-chip { width:34px; height:24px; border-radius:5px;
+    background:linear-gradient(135deg,#f5d67b,#caa14a 60%,#f5d67b); box-shadow:inset 0 0 0 1px rgba(0,0,0,.25); }
+  .rank-bar { transition:width .6s cubic-bezier(.22,1,.36,1); }
+  details.faq summary::-webkit-details-marker { display:none; }
+  details.faq[open] .faq-plus { transform:rotate(45deg); }
+  .faq-plus { transition:transform .25s; }
+  .num-input { background:rgba(255,255,255,.06); border:1px solid rgba(180,140,255,.25); border-radius:.5rem;
+    padding:.4rem .6rem; width:100%; color:#fff; font-size:.875rem; }
+  .num-input:focus { outline:none; border-color:#5CF2C7; box-shadow:0 0 0 2px rgba(92,242,199,.25); }
+  select.num-input option { background:#1C1930; }
+  .swatch { width:34px; height:34px; border-radius:9999px; cursor:pointer; border:2px solid transparent; }
+  .swatch.on { border-color:#fff; box-shadow:0 0 0 2px #5CF2C7; }
+  @media (max-width:420px){ .fan-card{ width:188px; height:122px; margin-left:-94px; } }
+</style>
+</head>
+<body id="top" class="min-h-screen text-slate-100 font-display antialiased">
+
+<!-- ======================= HEADER ======================= -->
+<header class="sticky top-0 z-[60] backdrop-blur-md bg-[#141126]/85 border-b border-[#B48CFF]/20">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5">
+      <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-[#B48CFF] to-[#5CF2C7] text-[#141126] text-xl font-black">₱</span>
+      <span class="text-xl font-extrabold tracking-tight">Perk<span class="text-[#5CF2C7]">Wise</span></span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm font-medium">
+      <a href="#top" class="text-slate-300 hover:text-white transition">Home</a>
+      <a href="https://fixoraa.tech" class="px-4 py-2 rounded-full bg-[#B48CFF]/15 border border-[#B48CFF]/40 text-[#B48CFF] hover:bg-[#B48CFF]/25 transition">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ======================= HERO ======================= -->
+<section class="relative overflow-hidden">
+  <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#B48CFF]/20 blur-[110px] pointer-events-none"></div>
+  <div class="absolute -top-20 right-0 w-80 h-80 rounded-full bg-[#5CF2C7]/10 blur-[110px] pointer-events-none"></div>
+  <div class="relative mx-auto max-w-6xl px-4 sm:px-6 pt-12 pb-8 text-center">
+    <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase bg-[#5CF2C7]/10 border border-[#5CF2C7]/40 text-[#5CF2C7]">
+      ✦ Unlimited Free Usage
+    </span>
+    <h1 class="mt-5 text-4xl sm:text-5xl font-black tracking-tight glow-text">
+      Which credit card actually pays <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#B48CFF] to-[#5CF2C7]">you</span> the most?
+    </h1>
+    <p class="mt-4 max-w-2xl mx-auto text-slate-300/90 text-base sm:text-lg">
+      PerkWise is a free credit card rewards calculator. Tell it how you spend each month, and it ranks every card in your wallet by real net value — fees included — then tells you whether that annual fee is worth it and which 2-card combo wins.
+    </p>
+    <p class="mt-3 text-xs text-slate-400">No signup · No paywall · Everything runs in your browser</p>
+  </div>
+</section>
+
+<!-- TOP AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="mx-auto max-w-6xl px-4 sm:px-6">
+
+  <!-- ======================= 1 · SPEND PROFILE ======================= -->
+  <section id="spend" class="mt-8 glass rounded-3xl p-5 sm:p-8">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <p class="text-xs font-bold tracking-[0.2em] uppercase text-[#5CF2C7]">Step 1</p>
+        <h2 class="text-2xl sm:text-3xl font-extrabold mt-1">Your monthly spend</h2>
+        <p class="text-slate-400 text-sm mt-1">Drag the sliders to match a typical month. Every result below updates live.</p>
+      </div>
+      <div class="text-right">
+        <p class="text-xs uppercase tracking-widest text-slate-400">Total / month</p>
+        <p id="spend-total" class="text-3xl font-black text-[#5CF2C7]">$0</p>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-2">
+      <span class="text-xs text-slate-400 self-center mr-1">Quick presets:</span>
+      <button data-preset="light" class="preset-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 border border-white/15 hover:border-[#5CF2C7]/60 hover:text-[#5CF2C7] transition">Light spender</button>
+      <button data-preset="family" class="preset-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 border border-white/15 hover:border-[#5CF2C7]/60 hover:text-[#5CF2C7] transition">Family</button>
+      <button data-preset="traveler" class="preset-btn px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 border border-white/15 hover:border-[#5CF2C7]/60 hover:text-[#5CF2C7] transition">Frequent traveler</button>
+    </div>
+
+    <div id="sliders" class="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2"></div>
+  </section>
+
+  <!-- ======================= 2 · WALLET ======================= -->
+  <section id="wallet" class="mt-8 glass rounded-3xl p-5 sm:p-8">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <p class="text-xs font-bold tracking-[0.2em] uppercase text-[#5CF2C7]">Step 2</p>
+        <h2 class="text-2xl sm:text-3xl font-extrabold mt-1">Your wallet</h2>
+        <p class="text-slate-400 text-sm mt-1">Cards fanned out like a hand. Tap one to inspect it — add, edit or delete cards anytime. Saved on this device.</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="btn-add-card" class="px-4 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-[#B48CFF] to-[#8b5cf6] text-[#141126] hover:opacity-90 transition">＋ Add card</button>
+        <button id="btn-reset-cards" class="px-4 py-2 rounded-xl text-sm font-semibold bg-white/5 border border-white/15 hover:border-[#B48CFF]/60 transition">Reset starters</button>
+      </div>
+    </div>
+
+    <div id="fan" class="fan-stage mt-2 select-none" role="listbox" aria-label="Your cards"></div>
+    <p id="fan-empty" class="hidden text-center text-slate-400 py-10">Your wallet is empty — add a card to start comparing.</p>
+
+    <!-- selected card detail -->
+    <div id="card-detail" class="mt-2 rounded-2xl bg-white/[.03] border border-[#B48CFF]/20 p-5"></div>
+
+    <!-- add / edit form -->
+    <div id="card-form-wrap" class="hidden mt-6 rounded-2xl border border-[#5CF2C7]/30 bg-[#5CF2C7]/[.04] p-5">
+      <h3 id="card-form-title" class="text-lg font-bold">Add a new card</h3>
+      <div id="form-errors" class="hidden mt-3 text-sm text-red-300 bg-red-500/10 border border-red-400/30 rounded-xl px-4 py-3"></div>
+      <div class="mt-4 grid sm:grid-cols-2 gap-4">
+        <label class="block">
+          <span class="text-xs font-semibold text-slate-300">Card name *</span>
+          <input id="f-name" type="text" maxlength="60" class="num-input mt-1" placeholder="e.g. My everyday card">
+        </label>
+        <label class="block">
+          <span class="text-xs font-semibold text-slate-300">Annual fee (USD) *</span>
+          <input id="f-fee" type="number" min="0" step="1" class="num-input mt-1" placeholder="0">
+        </label>
+      </div>
+      <p class="mt-5 text-xs font-semibold text-slate-300">Earn rates (% back per category) *</p>
+      <div id="f-rates" class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+      <p class="mt-5 text-xs font-semibold text-slate-300">Bonus-rate caps <span class="font-normal text-slate-400">(optional — annual $ spend that earns the bonus rate; extra spend earns the flat rate)</span></p>
+      <div class="mt-2 grid grid-cols-3 gap-3">
+        <label class="block"><span class="text-xs text-slate-400">Dining cap</span><input id="f-cap-dining" type="number" min="0" step="100" class="num-input mt-1" placeholder="none"></label>
+        <label class="block"><span class="text-xs text-slate-400">Groceries cap</span><input id="f-cap-groceries" type="number" min="0" step="100" class="num-input mt-1" placeholder="none"></label>
+        <label class="block"><span class="text-xs text-slate-400">Travel cap</span><input id="f-cap-travel" type="number" min="0" step="100" class="num-input mt-1" placeholder="none"></label>
+      </div>
+      <p class="mt-5 text-xs font-semibold text-slate-300">Card color</p>
+      <div id="f-colors" class="mt-2 flex gap-2"></div>
+      <div class="mt-6 flex gap-3">
+        <button id="btn-save-card" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#5CF2C7] text-[#141126] hover:opacity-90 transition">Save card</button>
+        <button id="btn-cancel-card" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white/5 border border-white/15 hover:border-white/40 transition">Cancel</button>
+      </div>
+    </div>
+
+    <!-- card manager list -->
+    <div class="mt-6">
+      <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400">Card database</h3>
+      <div id="card-list" class="mt-3 space-y-2"></div>
+    </div>
+  </section>
+
+  <!-- ======================= 3 · RESULTS ======================= -->
+  <section id="results" class="mt-8 grid gap-8 lg:grid-cols-2">
+
+    <!-- ranking -->
+    <div class="glass rounded-3xl p-5 sm:p-7">
+      <p class="text-xs font-bold tracking-[0.2em] uppercase text-[#5CF2C7]">Step 3 · Results</p>
+      <h2 class="text-2xl font-extrabold mt-1">Your cards, ranked</h2>
+      <p class="text-slate-400 text-sm mt-1">Net value per year = rewards earned − annual fee, on <em>your</em> spend.</p>
+      <div id="ranking" class="mt-5 space-y-3"></div>
+    </div>
+
+    <!-- breakeven -->
+    <div class="glass rounded-3xl p-5 sm:p-7">
+      <p class="text-xs font-bold tracking-[0.2em] uppercase text-[#5CF2C7]">Fee check</p>
+      <h2 class="text-2xl font-extrabold mt-1">Is the annual fee worth it?</h2>
+      <p class="text-slate-400 text-sm mt-1">Pick a fee card and a no-fee baseline — PerkWise finds the spend where the fee pays for itself.</p>
+      <div class="mt-4 grid sm:grid-cols-2 gap-3">
+        <label class="block">
+          <span class="text-xs font-semibold text-slate-300">Fee card</span>
+          <select id="be-card" class="num-input mt-1"></select>
+        </label>
+        <label class="block">
+          <span class="text-xs font-semibold text-slate-300">No-fee baseline</span>
+          <select id="be-base" class="num-input mt-1"></select>
+        </label>
+      </div>
+      <div id="breakeven-verdict" class="mt-4 rounded-2xl border border-white/10 bg-white/[.03] p-5 text-sm leading-relaxed"></div>
+    </div>
+  </section>
+
+  <!-- combo optimizer -->
+  <section id="combo" class="mt-8 glass rounded-3xl p-5 sm:p-8 overflow-hidden relative">
+    <div class="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-[#B48CFF]/15 blur-[90px] pointer-events-none"></div>
+    <p class="text-xs font-bold tracking-[0.2em] uppercase text-[#5CF2C7]">Optimizer</p>
+    <h2 class="text-2xl sm:text-3xl font-extrabold mt-1">Best 2-card combo <span class="text-[#5CF2C7]">for your spend</span></h2>
+    <p class="text-slate-400 text-sm mt-1 max-w-2xl">One card rarely wins every category. PerkWise tests every pair in your wallet, assigns each spending category to whichever card pays more on it, subtracts both fees, and shows the winning stack.</p>
+    <button id="btn-combo" class="mt-4 px-6 py-3 rounded-2xl font-bold text-[#141126] bg-gradient-to-r from-[#5CF2C7] to-[#B48CFF] hover:opacity-90 transition shadow-lg shadow-[#B48CFF]/20">⚡ Find my best combo</button>
+    <div id="combo-result" class="mt-5"></div>
+  </section>
+
+</main>
+
+<!-- BOTTOM AD (verbatim) -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="464498"></script>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= SEO ARTICLE ======================= -->
+<article class="mx-auto max-w-3xl px-4 sm:px-6 pb-4 text-slate-300 leading-relaxed">
+  <h2 class="text-3xl font-extrabold text-white mt-10">Credit Card Rewards Calculator: Find the Best Credit Card for Your Spending</h2>
+  <p class="mt-4">Walk into any conversation about credit cards and someone will tell you their card is "the best one." What they usually mean is that it is the best one <em>for them</em> — for their restaurants, their grocery runs, their flights. A credit card rewards calculator exists to answer the harder, personal question: which card puts the most money back in <em>your</em> pocket, given the way <em>you</em> actually spend? PerkWise does exactly that. You enter your monthly spend across six everyday categories, and it computes the real annual value of every card in your wallet — rewards earned minus the annual fee — then ranks them, checks whether each fee is worth paying, and even finds the two-card combination that squeezes the most out of your budget.</p>
+  <p class="mt-4">This matters more than most people realize. Industry surveys consistently show that a large share of rewards-earning cardholders never do the math: they pick a card for its headline rate ("5% back on dining!"), pay a $95 or $150 annual fee, and quietly earn less than they would have with a free 2% flat card. The headline rate is marketing. The net value — what lands in your pocket after the fee — is the truth. A good calculator closes that gap in about sixty seconds.</p>
+
+  <h2 class="text-2xl font-bold text-white mt-10">How credit card earn rates actually work</h2>
+  <p class="mt-4">Every rewards card is really a small table of earn rates, one per spending category. A typical card might pay 5% on dining, 3% on groceries, 2% on travel and 1% on everything else. The "everything else" rate is called the flat or base rate, and it is secretly the most important number on the card, because for most households the majority of monthly spend falls outside bonus categories. A card advertising 5% on dining but 1% on everything else can easily lose to a boring 2%-on-everything card if you only eat out twice a month.</p>
+  <p class="mt-4">Two more mechanics shape the real payout. First, <strong class="text-white">bonus caps</strong>: many cards pay the elevated rate only up to a yearly spend limit — say, 5% on groceries up to $6,000 per year — and drop to the flat rate beyond it. If your family spends $900 a month on groceries, you blow through that cap by July, and the "6% grocery card" behaves like a 1% card for the rest of the year. PerkWise models caps, which is why its numbers stay honest for heavy spenders. Second, <strong class="text-white">the annual fee</strong>: a $95 fee means the card starts every year $95 in the hole. It must earn $95 more than your best free alternative just to break even — a hurdle many fee cards never clear for moderate spenders.</p>
+  <p class="mt-4">The math itself is simple multiplication: monthly spend × 12 × earn rate, summed across categories, minus the fee. What makes it feel complicated is doing it across five cards and six categories by hand. That is precisely what a calculator automates — and why doing it once, with your real numbers, often changes which plastic you reach for.</p>
+
+  <h2 class="text-2xl font-bold text-white mt-10">Finding the best credit card for <em>your</em> spending</h2>
+  <p class="mt-4">Search "best credit card" and you will get a listicle. The problem with listicles is that they rank cards for a hypothetical average person. You are not hypothetical. The best credit card for your spending is a function of three personal inputs: how much you spend, where you spend it, and what you already hold. Change any one and the winner changes.</p>
+  <p class="mt-4">Consider two households. Household A spends $400 a month on dining, $300 on groceries, and $200 on travel. Household B spends $100 on dining, $700 on groceries, and $50 on travel. A 5%-on-dining card with no fee is a star for Household A and nearly pointless for Household B, which does far better with a high grocery rate even if that card charges $150 a year. Neither household is "right" — they simply have different spend fingerprints, and the winning card follows the fingerprint, not the marketing.</p>
+  <p class="mt-4">This is the workflow PerkWise is built around. First, set your monthly spend per category with the sliders — be honest, using a recent bank or card statement if you can. Second, build your wallet: start from the included card archetypes (a flat 2% card, a 5% dining card, a $95 travel card, a $150 grocery card, and a premium $550 card) and edit the rates to match cards you actually own or are considering. Every card is editable because real cards change their rates and your situation changes. Third, read the ranking. The cards are ordered by net annual value — rewards minus fee — computed on your numbers. If the winner surprises you, that surprise is the entire point of the exercise.</p>
+  <p class="mt-4">A practical tip: run the calculator twice — once with your current cards, and once with a card you are thinking of applying for. The difference in net value is the card's true yearly benefit to you, which you can weigh against any signup bonus. A $200 signup bonus on a card that nets you $40 less per year than your current setup is a bad deal by year six. People rarely do this subtraction; now you can do it in seconds.</p>
+
+  <h2 class="text-2xl font-bold text-white mt-10">Is a credit card annual fee worth it? The breakeven math</h2>
+  <p class="mt-4">"Is the annual fee worth it?" is one of the most searched questions in personal finance, and it has a precise mathematical answer: a fee is worth paying when the card's net value exceeds your best no-fee alternative. PerkWise answers it two ways. First, the ranking already subtracts every fee, so if a $95 card sits above your free 2% card, the fee is currently worth it for you. Second, the dedicated fee check tells you the <strong class="text-white">breakeven spend</strong> — the total monthly spend at which the fee card starts beating the free baseline, assuming your category mix stays the same.</p>
+  <p class="mt-4">Why does breakeven matter? Because fees are fixed but rewards scale with spend. A $95 fee card that earns an extra 3% on dining needs about $264 of monthly dining spend to cover its fee versus a 2% flat card ($95 ÷ 12 ÷ 0.03 ≈ $264). Spend less than that on dining and the fee is pure loss; spend more and every extra dollar is profit. Breakeven turns a vague feeling ("$95 seems like a lot") into a concrete number you can compare with your actual budget. PerkWise phrases the verdict plainly: either the card already pays for itself at your spend, it pays for itself once you reach a specific monthly total, or it never catches the free card no matter how much you spend.</p>
+  <p class="mt-4">There is an important nuance the breakeven number captures: it is always relative to a baseline. A $95 card might beat a free 1.5% card but lose to a free 2% card. That is why PerkWise defaults the baseline to your best no-fee card rather than some imaginary zero — the honest comparison is fee card versus the best free thing you could hold instead. If you are choosing between two fee cards, set the cheaper one as the baseline and read the verdict the same way.</p>
+
+  <h2 class="text-2xl font-bold text-white mt-10">One card or two? The case for a simple 2-card stack</h2>
+  <p class="mt-4">Ask enthusiasts how many cards to carry and you will hear numbers like seven or twelve, each deployed like a surgical instrument. For most people, that is a part-time job nobody applied for. But the jump from one card to two is where the biggest marginal gain lives. The reason is structural: no single card wins every category. A card with a great dining rate usually has a mediocre flat rate, and a great flat-rate card has no bonuses at all. Pair them — bonuses on one, everything else on the other — and you capture most of the available rewards with almost no mental overhead.</p>
+  <p class="mt-4">PerkWise's combo optimizer finds that pair for you without the spreadsheet. It tests every two-card combination in your wallet, assigns each spending category to whichever of the two pays more on it, subtracts both annual fees, and reports the winning stack plus exactly which card to use where. It also tells you how much the combo beats your best single card per year, so you can decide whether the extra complexity is worth, say, $180 a year. For many households the answer is yes — two cards, two rules ("dining and groceries on card A, everything else on card B"), and the third, fourth and fifth cards add little.</p>
+  <p class="mt-4">A word of caution the optimizer will not give you: only add a second card if you will actually use it as assigned. Rewards left on the table because you forgot which card to tap are worse than a simpler setup you follow consistently. The best stack is the best one you will execute.</p>
+
+  <h2 class="text-2xl font-bold text-white mt-10">Cashback vs. points: a quick note</h2>
+  <p class="mt-4">PerkWise estimates everything in cashback dollars, which keeps every card comparable. Points and miles can be worth more — or less — than a cent each depending on how you redeem them, and transfer partners add another layer of maybe. If you are a disciplined points optimizer who reliably extracts high value from travel redemptions, treat PerkWise's dollar figures as a conservative floor: your real value may be higher on points-heavy cards. If you mostly redeem points for statement credit or gift cards, the cashback estimate is essentially exact. When in doubt, the cashback number is the honest, comparable baseline.</p>
+
+  <h2 class="text-2xl font-bold text-white mt-10">How to use PerkWise in five minutes</h2>
+  <p class="mt-4">One, set your monthly spend with the sliders, using real numbers from a recent statement — estimates are fine, but real numbers make the ranking trustworthy. Two, review the starter wallet: five generic card archetypes covering the most common real-world designs, from a free flat 2% card to a premium $550 card. Three, edit them to match cards you own or are comparing — adjust the name, the annual fee, each category's earn rate, and any bonus caps. Your wallet is saved in your browser automatically. Four, read the ranking, run the fee check on any card you are unsure about, and hit the combo optimizer to see your best two-card stack. Five, revisit it once or twice a year or whenever your spending changes — a new commute, a new baby, a new travel habit can all reshuffle the winner.</p>
+
+  <h2 class="text-2xl font-bold text-white mt-10">Honest limitations</h2>
+  <p class="mt-4">PerkWise is an estimation tool, not a financial advisor. It assumes your spending mix stays roughly constant through the year, values all rewards at cash-back rates, and does not model signup bonuses, rotating quarterly categories, foreign transaction fees, or the opportunity cost of carrying a balance — and carrying a balance wipes out rewards many times over through interest, so always pay in full. The starter cards are generic archetypes with descriptive names, not specific bank products; always verify a real card's current rates, caps and fees with the issuer before applying, because issuers change terms. Used with those caveats, a rewards calculator is one of the highest-value five minutes in personal finance: it replaces marketing with arithmetic, and arithmetic does not care about slogans.</p>
+</article>
+
+<!-- ======================= FAQS ======================= -->
+<section class="mx-auto max-w-3xl px-4 sm:px-6 pb-16">
+  <h2 class="text-2xl font-extrabold text-white mt-8">Frequently asked questions</h2>
+  <div class="mt-4 space-y-3">
+    <details class="faq glass rounded-2xl px-5 py-4">
+      <summary class="cursor-pointer font-semibold text-white flex justify-between items-center gap-3">How does a credit card rewards calculator work?<span class="faq-plus text-[#5CF2C7] text-xl leading-none">＋</span></summary>
+      <p class="mt-3 text-sm text-slate-300 leading-relaxed">You enter your monthly spend per category, and the calculator multiplies each category by the card's earn rate, adds everything up over 12 months, and subtracts the annual fee. The result is the card's net annual value in dollars. PerkWise repeats that math for every card in your wallet so you can compare them on one honest number instead of headline rates.</p>
+    </details>
+    <details class="faq glass rounded-2xl px-5 py-4">
+      <summary class="cursor-pointer font-semibold text-white flex justify-between items-center gap-3">What is the best credit card for my spending?<span class="faq-plus text-[#5CF2C7] text-xl leading-none">＋</span></summary>
+      <p class="mt-3 text-sm text-slate-300 leading-relaxed">The one with the highest net value on <em>your</em> spend mix — rewards earned minus the annual fee. A 5% dining card wins for heavy restaurant spenders; a free flat 2% card often wins for everyone else. Set your real monthly spend in PerkWise and check the ranking: the winner for your budget may surprise you.</p>
+    </details>
+    <details class="faq glass rounded-2xl px-5 py-4">
+      <summary class="cursor-pointer font-semibold text-white flex justify-between items-center gap-3">Is a credit card annual fee worth it?<span class="faq-plus text-[#5CF2C7] text-xl leading-none">＋</span></summary>
+      <p class="mt-3 text-sm text-slate-300 leading-relaxed">A fee is worth paying only if the card earns at least that much more than your best free alternative. PerkWise computes the breakeven spend — the monthly total at which the fee card pulls ahead — and tells you plainly whether it already pays for itself at your spend, pays off at a specific monthly amount, or never beats the free card.</p>
+    </details>
+    <details class="faq glass rounded-2xl px-5 py-4">
+      <summary class="cursor-pointer font-semibold text-white flex justify-between items-center gap-3">Should I use one credit card or several?<span class="faq-plus text-[#5CF2C7] text-xl leading-none">＋</span></summary>
+      <p class="mt-3 text-sm text-slate-300 leading-relaxed">For most people, two cards hit the sweet spot: one for bonus categories and one flat-rate card for everything else. No single card wins every category, so a simple 2-card stack captures most available rewards with minimal effort. PerkWise's combo optimizer finds your best pair and shows exactly which card to use for each category.</p>
+    </details>
+    <details class="faq glass rounded-2xl px-5 py-4">
+      <summary class="cursor-pointer font-semibold text-white flex justify-between items-center gap-3">Do credit card rewards expire?<span class="faq-plus text-[#5CF2C7] text-xl leading-none">＋</span></summary>
+      <p class="mt-3 text-sm text-slate-300 leading-relaxed">It depends on the program: straight cashback usually does not expire as long as the account is open, while some points and miles programs have expiration policies or forfeit rewards if you close the card. PerkWise estimates earn value only — always check the issuer's terms for expiration and redemption rules before choosing a card.</p>
+    </details>
+    <details class="faq glass rounded-2xl px-5 py-4">
+      <summary class="cursor-pointer font-semibold text-white flex justify-between items-center gap-3">How accurate are PerkWise's estimates?<span class="faq-plus text-[#5CF2C7] text-xl leading-none">＋</span></summary>
+      <p class="mt-3 text-sm text-slate-300 leading-relaxed">They are exact arithmetic on the numbers you enter: spend × earn rate × 12, minus fees, with bonus caps modeled. Accuracy depends on your inputs — use real statement numbers for best results. PerkWise values rewards as cashback and ignores signup bonuses, rotating categories, and interest charges, so treat it as a comparison tool, not financial advice.</p>
+    </details>
+  </div>
+</section>
+
+<footer class="border-t border-white/10 py-8 text-center text-xs text-slate-500">
+  <p class="text-sm font-bold text-slate-300">PerkWise <span class="text-[#5CF2C7]">·</span> free credit card rewards calculator</p>
+  <p class="mt-2 max-w-xl mx-auto px-4">Estimates only — not financial advice. Verify current rates, caps and fees with the card issuer before applying.</p>
+</footer>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "How does a credit card rewards calculator work?", "acceptedAnswer": {"@type": "Answer", "text": "You enter your monthly spend per category; the calculator multiplies each category by the card's earn rate, totals it over 12 months, and subtracts the annual fee to get the card's net annual value in dollars."}},
+    {"@type": "Question", "name": "What is the best credit card for my spending?", "acceptedAnswer": {"@type": "Answer", "text": "The card with the highest net value on your spend mix — rewards earned minus the annual fee. Enter your real monthly spend in PerkWise to see your personalized ranking."}},
+    {"@type": "Question", "name": "Is a credit card annual fee worth it?", "acceptedAnswer": {"@type": "Answer", "text": "A fee is worth paying only if the card earns at least that much more than your best free alternative. PerkWise computes the breakeven spend where the fee card pulls ahead of a no-fee baseline."}},
+    {"@type": "Question", "name": "Should I use one credit card or several?", "acceptedAnswer": {"@type": "Answer", "text": "For most people two cards hit the sweet spot: one for bonus categories and one flat-rate card for everything else. PerkWise's combo optimizer finds your best pair."}},
+    {"@type": "Question", "name": "Do credit card rewards expire?", "acceptedAnswer": {"@type": "Answer", "text": "Straight cashback usually does not expire while the account is open; some points and miles programs have expiration policies. Always check the issuer's terms."}},
+    {"@type": "Question", "name": "How accurate are PerkWise's estimates?", "acceptedAnswer": {"@type": "Answer", "text": "They are exact arithmetic on your inputs: spend times earn rate times 12, minus fees, with bonus caps modeled. Values assume cashback redemption; treat results as a comparison tool, not financial advice."}}
+  ]
+}
+</script>
+
+<script id="perkwise-card-rewards-optimizer-lib">
+/* ============================================================================
+ * PerkWise — Credit Card Rewards Optimizer core library
+ * PURE FUNCTIONS ONLY. No DOM, no window, no document, no localStorage,
+ * no navigator, no network. Safe to eval in Node or a browser.
+ *
+ * Card schema (v1):
+ *   {
+ *     id: "starter-flat2",        // unique string
+ *     name: "Flat 2% Card",       // display name, 1..60 chars
+ *     annualFee: 95,              // USD per year, number >= 0
+ *     rates: {                    // earn rate in PERCENT per category
+ *       dining: 5, groceries: 3, travel: 2, gas: 2, streaming: 4, other: 1
+ *     },
+ *     caps: { dining: 6000 },     // OPTIONAL: annual $ of spend that earns
+ *                                 // the bonus rate; spend above the cap
+ *                                 // earns the card's flat ("other") rate
+ *     color: "#B48CFF"            // cosmetic accent for the wallet fan
+ *   }
+ *
+ * Spend schema: { dining: 300, groceries: 400, travel: 200, gas: 150,
+ *                 streaming: 50, other: 500 } — USD per MONTH per category.
+ * All rewards are estimated as cashback dollars per year.
+ * ========================================================================== */
+
+/* ---------- categories ---------- */
+
+function perkCategories() {
+  return [
+    { key: 'dining',    label: 'Dining & restaurants',      icon: '🍽️', def: 300 },
+    { key: 'groceries', label: 'Groceries',                 icon: '🛒', def: 400 },
+    { key: 'travel',    label: 'Travel & flights',          icon: '✈️', def: 200 },
+    { key: 'gas',       label: 'Gas & fuel',                icon: '⛽', def: 150 },
+    { key: 'streaming', label: 'Streaming & subscriptions', icon: '📺', def: 50 },
+    { key: 'other',     label: 'Everything else',           icon: '🧾', def: 500 }
+  ];
+}
+
+function perkCategoryKeys() {
+  var cats = perkCategories();
+  var keys = [];
+  for (var i = 0; i < cats.length; i++) keys.push(cats[i].key);
+  return keys;
+}
+
+/* ---------- small utils ---------- */
+
+function perkRound2(n) {
+  return Math.round(Number(n) * 100) / 100;
+}
+
+function perkCoerceNum(v, fallback) {
+  var n = Number(v);
+  if (!isFinite(n)) return fallback;
+  return n;
+}
+
+function formatMoney(n, decimals) {
+  var d = (typeof decimals === 'number') ? decimals : 2;
+  var x = perkCoerceNum(n, 0);
+  var neg = x < 0;
+  var fixed = Math.abs(x).toFixed(d);
+  var parts = fixed.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (neg ? '-$' : '$') + parts.join('.');
+}
+
+function formatPct(n, decimals) {
+  var d = (typeof decimals === 'number') ? decimals : 1;
+  return perkCoerceNum(n, 0).toFixed(d) + '%';
+}
+
+function slugFromName(name) {
+  return String(name || 'card').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40) || 'card';
+}
+
+/* ---------- normalization ---------- */
+
+function normalizeSpend(spendByCat) {
+  var out = {};
+  var keys = perkCategoryKeys();
+  for (var i = 0; i < keys.length; i++) {
+    var v = spendByCat ? spendByCat[keys[i]] : undefined;
+    var n = perkCoerceNum(v, 0);
+    out[keys[i]] = n < 0 ? 0 : n;
+  }
+  return out;
+}
+
+function totalMonthlySpend(spendByCat) {
+  var spend = normalizeSpend(spendByCat);
+  var total = 0;
+  for (var k in spend) total += spend[k];
+  return perkRound2(total);
+}
+
+function normalizeCard(card) {
+  var c = card || {};
+  var rates = {};
+  var keys = perkCategoryKeys();
+  var flat = perkCoerceNum(c.rates && c.rates.other, 1);
+  if (flat < 0) flat = 0;
+  for (var i = 0; i < keys.length; i++) {
+    var r = perkCoerceNum(c.rates && c.rates[keys[i]], flat);
+    rates[keys[i]] = r < 0 ? 0 : r;
+  }
+  var caps = {};
+  if (c.caps) {
+    for (var j = 0; j < keys.length; j++) {
+      if (c.caps[keys[j]] !== undefined && c.caps[keys[j]] !== null && c.caps[keys[j]] !== '') {
+        var cap = perkCoerceNum(c.caps[keys[j]], 0);
+        if (cap > 0) caps[keys[j]] = cap;
+      }
+    }
+  }
+  var fee = perkCoerceNum(c.annualFee, 0);
+  if (fee < 0) fee = 0;
+  return {
+    id: c.id ? String(c.id) : 'card-' + slugFromName(c.name),
+    name: c.name ? String(c.name).slice(0, 60) : 'Unnamed card',
+    annualFee: perkRound2(fee),
+    rates: rates,
+    caps: caps,
+    color: /^#[0-9a-fA-F]{6}$/.test(String(c.color || '')) ? String(c.color) : '#B48CFF'
+  };
+}
+
+function newBlankCard() {
+  return {
+    id: '',
+    name: '',
+    annualFee: 0,
+    rates: { dining: 1, groceries: 1, travel: 1, gas: 1, streaming: 1, other: 1 },
+    caps: {},
+    color: '#B48CFF'
+  };
+}
+
+/* ---------- validation ---------- */
+
+function validateCard(card) {
+  var errors = [];
+  var c = card || {};
+  var name = String(c.name || '').trim();
+  if (!name) errors.push('Give your card a name.');
+  else if (name.length > 60) errors.push('Card name must be 60 characters or fewer.');
+  var fee = Number(c.annualFee);
+  if (!isFinite(fee)) errors.push('Annual fee must be a number.');
+  else if (fee < 0) errors.push('Annual fee can’t be negative.');
+  else if (fee > 100000) errors.push('Annual fee looks unrealistically high.');
+  var keys = perkCategoryKeys();
+  if (!c.rates || typeof c.rates !== 'object') {
+    errors.push('Earn rates are missing.');
+  } else {
+    for (var i = 0; i < keys.length; i++) {
+      var r = Number(c.rates[keys[i]]);
+      if (!isFinite(r)) errors.push('Rate for "' + keys[i] + '" must be a number.');
+      else if (r < 0) errors.push('Rate for "' + keys[i] + '" can’t be negative.');
+      else if (r > 50) errors.push('Rate for "' + keys[i] + '" looks unrealistically high (max 50%).');
+    }
+  }
+  if (c.caps !== undefined && c.caps !== null && typeof c.caps === 'object') {
+    for (var j = 0; j < keys.length; j++) {
+      var v = c.caps[keys[j]];
+      if (v === undefined || v === null || v === '') continue;
+      var cv = Number(v);
+      if (!isFinite(cv)) errors.push('Cap for "' + keys[j] + '" must be a number.');
+      else if (cv < 0) errors.push('Cap for "' + keys[j] + '" can’t be negative.');
+      else if (cv > 10000000) errors.push('Cap for "' + keys[j] + '" looks unrealistically high.');
+    }
+  }
+  if (c.color !== undefined && c.color !== null && String(c.color) !== '') {
+    if (!/^#[0-9a-fA-F]{6}$/.test(String(c.color))) errors.push('Card color must be a #RRGGBB hex value.');
+  }
+  return errors;
+}
+
+/* ---------- rewards math ---------- */
+
+// Rewards for one category, in dollars per year.
+// monthlySpend may be a plain number (preferred) or a full spend object.
+function categoryRewardAnnual(card, catKey, monthlySpend) {
+  var c = normalizeCard(card);
+  var m;
+  if (typeof monthlySpend === 'number') {
+    m = monthlySpend < 0 ? 0 : monthlySpend;
+  } else {
+    m = normalizeSpend(monthlySpend)[catKey] || 0;
+  }
+  var annual = m * 12;
+  var rate = perkCoerceNum(c.rates[catKey], c.rates.other);
+  var cap = c.caps[catKey];
+  if (cap === undefined || cap === null || !(cap > 0) || annual <= cap) {
+    return perkRound2(annual * rate / 100);
+  }
+  var flat = perkCoerceNum(c.rates.other, 0);
+  return perkRound2(cap * rate / 100 + (annual - cap) * flat / 100);
+}
+
+// Full per-category breakdown for a card, dollars per year.
+function categoryRewards(card, spendByCat) {
+  var c = normalizeCard(card);
+  var spend = normalizeSpend(spendByCat);
+  var out = {};
+  var keys = perkCategoryKeys();
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    out[k] = {
+      monthlySpend: spend[k],
+      annualSpend: perkRound2(spend[k] * 12),
+      rate: perkCoerceNum(c.rates[k], c.rates.other),
+      rewardsAnnual: categoryRewardAnnual(c, k, spend[k])
+    };
+  }
+  return out;
+}
+
+// Gross rewards (before fee), dollars per year.
+function annualRewards(card, spendByCat) {
+  var cats = categoryRewards(card, spendByCat);
+  var total = 0;
+  for (var k in cats) total += cats[k].rewardsAnnual;
+  return perkRound2(total);
+}
+
+// Net value after subtracting the annual fee, dollars per year.
+function netAnnualValue(card, spendByCat) {
+  var c = normalizeCard(card);
+  return perkRound2(annualRewards(c, spendByCat) - c.annualFee);
+}
+
+// Everything the UI needs for one card at a glance.
+function summarizeCard(card, spendByCat) {
+  var c = normalizeCard(card);
+  var gross = annualRewards(c, spendByCat);
+  return {
+    card: c,
+    grossAnnual: gross,
+    annualFee: c.annualFee,
+    netAnnual: perkRound2(gross - c.annualFee),
+    monthlySpend: totalMonthlySpend(spendByCat),
+    perCategory: categoryRewards(c, spendByCat)
+  };
+}
+
+// Rank cards best → worst by net annual value.
+function rankCards(cards, spendByCat) {
+  var rows = [];
+  for (var i = 0; i < (cards || []).length; i++) {
+    if (validateCard(cards[i]).length === 0) rows.push(summarizeCard(cards[i], spendByCat));
+  }
+  rows.sort(function (a, b) { return b.netAnnual - a.netAnnual; });
+  return rows;
+}
+
+/* ---------- head-to-head compare ---------- */
+
+function compareCards(cardA, cardB, spendByCat) {
+  var a = summarizeCard(cardA, spendByCat);
+  var b = summarizeCard(cardB, spendByCat);
+  var netDiff = perkRound2(a.netAnnual - b.netAnnual);
+  var verdict = netDiff > 0.005 ? 'A_WINS' : (netDiff < -0.005 ? 'B_WINS' : 'TIE');
+  return {
+    a: a, b: b,
+    extraRewardsAnnual: perkRound2(a.grossAnnual - b.grossAnnual),
+    extraFeeAnnual: perkRound2(a.card.annualFee - b.card.annualFee),
+    netDiffAnnual: netDiff,
+    verdict: verdict
+  };
+}
+
+/* ---------- fee breakeven analysis ---------- */
+
+// At what total monthly spend (same category MIX as the user) does `card`
+// start beating `baselineCard`? Uses a dense scan + bisection so category
+// caps can't silently corrupt the answer.
+//
+// status: 'already' | 'pays_off_at' | 'never' | 'no_spend'
+//   - 'already': breakeven is at or below the user's current spend
+//   - 'pays_off_at': card pays for itself once monthly spend reaches X
+//   - 'never': baseline wins all the way out to 60x the user's spend
+function breakevenAnalysis(card, baselineCard, spendByCat) {
+  var a = normalizeCard(card);
+  var b = normalizeCard(baselineCard);
+  var spend = normalizeSpend(spendByCat);
+  var total = totalMonthlySpend(spend);
+  var res = {
+    cardName: a.name,
+    baselineName: b.name,
+    currentMonthly: total,
+    cardFee: a.annualFee,
+    baselineFee: b.annualFee,
+    status: 'never',
+    breakevenMonthly: null,
+    flipsBack: false
+  };
+  if (total <= 0) { res.status = 'no_spend'; return res; }
+
+  function scaled(k) {
+    var s = {};
+    for (var key in spend) s[key] = spend[key] * k;
+    return s;
+  }
+  function diff(k) {
+    return netAnnualValue(a, scaled(k)) - netAnnualValue(b, scaled(k));
+  }
+
+  var d0 = diff(0);
+  var d1 = diff(1);
+  if (d0 >= 0 && d1 >= 0) {
+    res.status = 'already';
+    res.breakevenMonthly = 0;
+    return res;
+  }
+  // dense scan for the first negative -> non-negative crossing
+  var STEP = 0.01, KMAX = 60;
+  var prevK = 0, prevD = d0, crossLo = -1, crossHi = -1;
+  for (var k = STEP; k <= KMAX + 1e-9; k += STEP) {
+    var dk = diff(k);
+    if (prevD < 0 && dk >= 0) { crossLo = prevK; crossHi = k; break; }
+    prevK = k; prevD = dk;
+  }
+  if (crossLo < 0) {
+    res.status = d1 >= 0 ? 'already' : 'never';
+    if (res.status === 'already') res.breakevenMonthly = 0;
+    return res;
+  }
+  // bisect the bracket for a precise root
+  var lo = crossLo, hi = crossHi;
+  for (var i = 0; i < 60; i++) {
+    var mid = (lo + hi) / 2;
+    if (diff(mid) >= 0) hi = mid; else lo = mid;
+  }
+  var kStar = hi;
+  res.breakevenMonthly = perkRound2(kStar * total);
+  res.status = (kStar <= 1.000001) ? 'already' : 'pays_off_at';
+  res.flipsBack = diff(KMAX) < 0;
+  return res;
+}
+
+/* ---------- 2-card combo optimizer ---------- */
+
+// Picks the best 1- or 2-card combo for the spend profile: every category's
+// spend goes to whichever card in the pair earns more on it, then both
+// annual fees are subtracted.
+function bestTwoCardCombo(cards, spendByCat) {
+  var valid = [];
+  for (var i = 0; i < (cards || []).length; i++) {
+    if (validateCard(cards[i]).length === 0) valid.push(normalizeCard(cards[i]));
+  }
+  var spend = normalizeSpend(spendByCat);
+  var keys = perkCategoryKeys();
+  if (valid.length === 0) return null;
+
+  function pairScore(x, y) {
+    var allocation = {};
+    var gross = 0;
+    for (var i = 0; i < keys.length; i++) {
+      var cat = keys[i];
+      var rx = categoryRewardAnnual(x, cat, spend[cat]);
+      var ry = y ? categoryRewardAnnual(y, cat, spend[cat]) : -1;
+      var winner, r;
+      if (!y || rx >= ry) { winner = x; r = rx; }
+      else { winner = y; r = ry; }
+      allocation[cat] = {
+        cardId: winner.id,
+        cardName: winner.name,
+        rate: perkCoerceNum(winner.rates[cat], winner.rates.other),
+        rewardsAnnual: r
+      };
+      gross += r;
+    }
+    var fees = x.annualFee + (y ? y.annualFee : 0);
+    return { net: perkRound2(gross - fees), gross: perkRound2(gross), fees: perkRound2(fees), allocation: allocation };
+  }
+
+  // best single card (fallback + comparison baseline)
+  var bestSingle = null;
+  for (var s = 0; s < valid.length; s++) {
+    var sc = pairScore(valid[s], null);
+    if (!bestSingle || sc.net > bestSingle.netAnnual) {
+      bestSingle = { card: valid[s], netAnnual: sc.net, grossAnnual: sc.gross };
+    }
+  }
+
+  if (valid.length === 1) {
+    var only = pairScore(valid[0], null);
+    return {
+      isPair: false,
+      cards: [valid[0]],
+      netAnnual: only.net,
+      grossAnnual: only.gross,
+      feesAnnual: only.fees,
+      allocation: only.allocation,
+      bestSingle: bestSingle,
+      comboBeatsSingleBy: 0
+    };
+  }
+
+  var best = null;
+  for (var p = 0; p < valid.length; p++) {
+    for (var q = p + 1; q < valid.length; q++) {
+      var ps = pairScore(valid[p], valid[q]);
+      if (!best || ps.net > best.netAnnual) {
+        best = {
+          isPair: true,
+          cards: [valid[p], valid[q]],
+          netAnnual: ps.net,
+          grossAnnual: ps.gross,
+          feesAnnual: ps.fees,
+          allocation: ps.allocation,
+          bestSingle: bestSingle,
+          comboBeatsSingleBy: perkRound2(ps.net - bestSingle.netAnnual)
+        };
+      }
+    }
+  }
+  return best;
+}
+
+/* ---------- starter card database ---------- */
+
+// Generic, well-known card ARCHETYPES. Names are descriptive on purpose —
+// PerkWise never claims these are specific bank products.
+function starterCards() {
+  return [
+    {
+      id: 'starter-flat2',
+      name: 'Flat 2% Card',
+      annualFee: 0,
+      rates: { dining: 2, groceries: 2, travel: 2, gas: 2, streaming: 2, other: 2 },
+      caps: {},
+      color: '#5CF2C7'
+    },
+    {
+      id: 'starter-dining5',
+      name: 'Dining 5% Card',
+      annualFee: 0,
+      rates: { dining: 5, groceries: 3, travel: 2, gas: 2, streaming: 4, other: 1 },
+      caps: { dining: 6000 },
+      color: '#B48CFF'
+    },
+    {
+      id: 'starter-travel95',
+      name: 'Travel $95 Card',
+      annualFee: 95,
+      rates: { dining: 3, groceries: 2, travel: 5, gas: 2, streaming: 2, other: 1.5 },
+      caps: {},
+      color: '#7DD3FC'
+    },
+    {
+      id: 'starter-grocery150',
+      name: 'Grocery $150 Card',
+      annualFee: 150,
+      rates: { dining: 3, groceries: 6, travel: 2, gas: 3, streaming: 2, other: 1 },
+      caps: { groceries: 6000 },
+      color: '#FBBF24'
+    },
+    {
+      id: 'starter-premium550',
+      name: 'Premium $550 Card',
+      annualFee: 550,
+      rates: { dining: 5, groceries: 4, travel: 6, gas: 3, streaming: 4, other: 2 },
+      caps: {},
+      color: '#F472B6'
+    }
+  ];
+}
+
+</script>
+<script>
+/* ================= PerkWise UI wiring (DOM + localStorage live here) ================= */
+(function () {
+  'use strict';
+
+  var LS_CARDS = 'perkwise_cards_v1';
+  var LS_SPEND = 'perkwise_spend_v1';
+  var COLORS = ['#B48CFF', '#5CF2C7', '#7DD3FC', '#FBBF24', '#F472B6', '#A3E635'];
+
+  var state = { cards: [], spend: {}, selectedId: null, editingId: null, formColor: COLORS[0], comboRun: false };
+
+  function $(id) { return document.getElementById(id); }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function uid() {
+    return 'card-' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1296).toString(36);
+  }
+
+  /* ---------- persistence ---------- */
+
+  function loadState() {
+    try {
+      var c = JSON.parse(localStorage.getItem(LS_CARDS) || 'null');
+      if (Array.isArray(c) && c.length) state.cards = c;
+      else state.cards = starterCards();
+    } catch (e) { state.cards = starterCards(); }
+    try {
+      var s = JSON.parse(localStorage.getItem(LS_SPEND) || 'null');
+      state.spend = normalizeSpend(s || {});
+      var cats = perkCategories(), allZero = true, i;
+      for (i = 0; i < cats.length; i++) if (state.spend[cats[i].key] > 0) allZero = false;
+      if (!s || allZero) {
+        for (i = 0; i < cats.length; i++) state.spend[cats[i].key] = cats[i].def;
+      }
+    } catch (e2) {
+      state.spend = {};
+      var cats2 = perkCategories();
+      for (var j = 0; j < cats2.length; j++) state.spend[cats2[j].key] = cats2[j].def;
+    }
+    if (state.cards.length) state.selectedId = state.cards[0].id;
+  }
+
+  function saveCards() { try { localStorage.setItem(LS_CARDS, JSON.stringify(state.cards)); } catch (e) {} }
+  function saveSpend() { try { localStorage.setItem(LS_SPEND, JSON.stringify(state.spend)); } catch (e) {} }
+
+  function getCard(id) {
+    for (var i = 0; i < state.cards.length; i++) if (state.cards[i].id === id) return state.cards[i];
+    return null;
+  }
+
+  /* ---------- spend sliders ---------- */
+
+  function buildSliders() {
+    var wrap = $('sliders');
+    var cats = perkCategories();
+    var html = '';
+    for (var i = 0; i < cats.length; i++) {
+      var c = cats[i];
+      html += '<div>' +
+        '<div class="flex justify-between items-baseline mb-1.5">' +
+          '<label for="sl-' + c.key + '" class="text-sm font-semibold text-slate-200">' + c.icon + ' ' + esc(c.label) + '</label>' +
+          '<span id="slv-' + c.key + '" class="text-sm font-bold text-[#5CF2C7]"></span>' +
+        '</div>' +
+        '<input id="sl-' + c.key + '" type="range" min="0" max="2000" step="10" value="' + state.spend[c.key] + '" class="perk-range" data-cat="' + c.key + '" aria-label="' + esc(c.label) + ' monthly spend">' +
+      '</div>';
+    }
+    wrap.innerHTML = html;
+    var inputs = wrap.querySelectorAll('input[type=range]');
+    for (var j = 0; j < inputs.length; j++) {
+      inputs[j].addEventListener('input', onSlider);
+      paintSlider(inputs[j]);
+    }
+    refreshSliderLabels();
+  }
+
+  function paintSlider(el) {
+    var pct = (el.value / 2000) * 100;
+    el.style.setProperty('--fill', pct + '%');
+  }
+
+  function refreshSliderLabels() {
+    var cats = perkCategories();
+    for (var i = 0; i < cats.length; i++) {
+      var k = cats[i].key;
+      $('slv-' + k).textContent = formatMoney(state.spend[k], 0) + '/mo';
+    }
+    $('spend-total').textContent = formatMoney(totalMonthlySpend(state.spend), 0);
+  }
+
+  function onSlider(e) {
+    var el = e.target, cat = el.getAttribute('data-cat');
+    state.spend[cat] = Number(el.value);
+    paintSlider(el);
+    saveSpend();
+    refreshSliderLabels();
+    renderResults();
+  }
+
+  var PRESETS = {
+    light:    { dining: 150, groceries: 250, travel: 50,  gas: 80,  streaming: 30, other: 250 },
+    family:   { dining: 400, groceries: 800, travel: 150, gas: 200, streaming: 60, other: 600 },
+    traveler: { dining: 350, groceries: 300, travel: 900, gas: 120, streaming: 50, other: 500 }
+  };
+
+  function bindPresets() {
+    var btns = document.querySelectorAll('.preset-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function () {
+        var p = PRESETS[this.getAttribute('data-preset')];
+        if (!p) return;
+        for (var k in p) state.spend[k] = p[k];
+        saveSpend();
+        var inputs = document.querySelectorAll('#sliders input[type=range]');
+        for (var j = 0; j < inputs.length; j++) {
+          var cat = inputs[j].getAttribute('data-cat');
+          inputs[j].value = state.spend[cat];
+          paintSlider(inputs[j]);
+        }
+        refreshSliderLabels();
+        renderResults();
+      });
+    }
+  }
+
+  /* ---------- fanned wallet ---------- */
+
+  function renderFan() {
+    var fan = $('fan');
+    var n = state.cards.length;
+    $('fan-empty').classList.toggle('hidden', n > 0);
+    fan.innerHTML = '';
+    if (!n) return;
+    for (var i = 0; i < n; i++) {
+      var card = normalizeCard(state.cards[i]);
+      var sum = summarizeCard(card, state.spend);
+      var off = i - (n - 1) / 2;
+      var angle = off * 9;
+      var x = off * 52;
+      var y = Math.abs(off) * 12 + (card.id === state.selectedId ? -18 : 0);
+      var el = document.createElement('div');
+      el.className = 'fan-card rounded-2xl p-3.5' + (card.id === state.selectedId ? ' selected' : '');
+      el.setAttribute('role', 'option');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-selected', card.id === state.selectedId ? 'true' : 'false');
+      el.style.transform = 'translate(calc(-50% + ' + x + 'px), ' + y + 'px) rotate(' + angle + 'deg)';
+      el.style.zIndex = String(10 + (n - Math.round(Math.abs(off))) + (card.id === state.selectedId ? 50 : 0));
+      el.style.background = 'linear-gradient(135deg, ' + card.color + ' 0%, ' + card.color + '55 55%, #1C1930 130%)';
+      el.style.boxShadow = '0 10px 30px rgba(0,0,0,.45)';
+      el.innerHTML =
+        '<div class="flex justify-between items-start">' +
+          '<div class="cc-chip"></div>' +
+          '<span class="text-[10px] font-bold tracking-widest text-white/70">PERKWISE</span>' +
+        '</div>' +
+        '<p class="mt-2 text-sm font-extrabold text-white truncate drop-shadow">' + esc(card.name) + '</p>' +
+        '<p class="text-[11px] text-white/80">Net <span class="font-bold text-white">' + formatMoney(sum.netAnnual, 0) + '</span>/yr' +
+        (card.annualFee > 0 ? ' · ' + formatMoney(card.annualFee, 0) + ' fee' : ' · no fee') + '</p>';
+      (function (id) {
+        el.addEventListener('click', function () { state.selectedId = id; renderResults(); });
+        el.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); state.selectedId = id; renderResults(); }
+        });
+      })(card.id);
+      fan.appendChild(el);
+    }
+  }
+
+  /* ---------- card detail ---------- */
+
+  function renderCardDetail() {
+    var box = $('card-detail');
+    var card = getCard(state.selectedId);
+    if (!card) { box.innerHTML = '<p class="text-slate-400 text-sm">Select a card above to see its breakdown.</p>'; return; }
+    var c = normalizeCard(card);
+    var sum = summarizeCard(c, state.spend);
+    var cats = perkCategories();
+    var rows = '';
+    for (var i = 0; i < cats.length; i++) {
+      var k = cats[i].key, pc = sum.perCategory[k];
+      rows += '<tr class="border-t border-white/5">' +
+        '<td class="py-2 pr-2 text-sm">' + cats[i].icon + ' ' + esc(cats[i].label) + '</td>' +
+        '<td class="py-2 pr-2 text-sm text-right text-slate-300">' + formatMoney(pc.monthlySpend, 0) + '</td>' +
+        '<td class="py-2 pr-2 text-sm text-right text-[#B48CFF] font-semibold">' + formatPct(pc.rate) + '</td>' +
+        '<td class="py-2 text-sm text-right text-[#5CF2C7] font-bold">' + formatMoney(pc.rewardsAnnual, 0) + '</td></tr>';
+    }
+    // inject cap notes into the label cell
+    box.innerHTML =
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+        '<div>' +
+          '<h3 class="text-xl font-extrabold text-white">' + esc(c.name) + '</h3>' +
+          '<p class="text-sm text-slate-400 mt-0.5">Gross rewards <span class="text-white font-semibold">' + formatMoney(sum.grossAnnual, 0) + '/yr</span>' +
+          ' − fee <span class="text-white font-semibold">' + formatMoney(c.annualFee, 0) + '</span>' +
+          ' = net <span class="text-[#5CF2C7] font-extrabold">' + formatMoney(sum.netAnnual, 0) + '/yr</span></p>' +
+        '</div>' +
+        '<div class="flex gap-2">' +
+          '<button data-act="edit" data-id="' + esc(c.id) + '" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 border border-white/15 hover:border-[#B48CFF]/60 transition">Edit</button>' +
+          '<button data-act="del" data-id="' + esc(c.id) + '" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 border border-white/15 hover:border-red-400/60 hover:text-red-300 transition">Delete</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mt-3 overflow-x-auto"><table class="w-full min-w-[420px]">' +
+        '<thead><tr class="text-left text-[11px] uppercase tracking-widest text-slate-500">' +
+        '<th class="py-1 pr-2 font-semibold">Category</th><th class="py-1 pr-2 font-semibold text-right">Spend/mo</th>' +
+        '<th class="py-1 pr-2 font-semibold text-right">Rate</th><th class="py-1 font-semibold text-right">Rewards/yr</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table></div>';
+    bindCardButtons(box);
+  }
+
+  function bindCardButtons(root) {
+    var btns = root.querySelectorAll('button[data-act]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function () {
+        var id = this.getAttribute('data-id');
+        if (this.getAttribute('data-act') === 'edit') openForm(id);
+        else deleteCard(id);
+      });
+    }
+  }
+
+  /* ---------- card list (database) ---------- */
+
+  function renderCardList() {
+    var box = $('card-list');
+    var ranked = rankCards(state.cards, state.spend);
+    if (!ranked.length) { box.innerHTML = '<p class="text-slate-400 text-sm">No cards yet — add your first card above.</p>'; return; }
+    var html = '';
+    for (var i = 0; i < ranked.length; i++) {
+      var r = ranked[i];
+      var netCls = r.netAnnual >= 0 ? 'text-[#5CF2C7]' : 'text-red-300';
+      html += '<div class="flex items-center gap-3 rounded-xl bg-white/[.03] border border-white/10 px-4 py-2.5">' +
+        '<span class="w-3.5 h-3.5 rounded-full shrink-0" style="background:' + esc(r.card.color) + '"></span>' +
+        '<span class="font-semibold text-sm flex-1 truncate">' + esc(r.card.name) + '</span>' +
+        '<span class="text-xs text-slate-400 hidden sm:inline">' + (r.card.annualFee > 0 ? formatMoney(r.card.annualFee, 0) + ' fee' : 'no fee') + '</span>' +
+        '<span class="text-sm font-extrabold ' + netCls + '">' + formatMoney(r.netAnnual, 0) + '/yr</span>' +
+        '<button data-act="edit" data-id="' + esc(r.card.id) + '" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white/5 border border-white/15 hover:border-[#B48CFF]/60 transition">Edit</button>' +
+        '<button data-act="del" data-id="' + esc(r.card.id) + '" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white/5 border border-white/15 hover:border-red-400/60 hover:text-red-300 transition">Delete</button>' +
+      '</div>';
+    }
+    box.innerHTML = html;
+    bindCardButtons(box);
+  }
+
+  /* ---------- ranking ---------- */
+
+  function renderRanking() {
+    var box = $('ranking');
+    var ranked = rankCards(state.cards, state.spend);
+    if (!ranked.length) { box.innerHTML = '<p class="text-slate-400 text-sm">Add a card to see your ranking.</p>'; return; }
+    var maxNet = ranked[0].netAnnual;
+    var html = '';
+    for (var i = 0; i < ranked.length; i++) {
+      var r = ranked[i];
+      var w = maxNet > 0 ? Math.max(3, Math.round((r.netAnnual / maxNet) * 100)) : 3;
+      var medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : '<span class="text-slate-500 text-sm font-bold">' + (i + 1) + '</span>'));
+      var netCls = r.netAnnual >= 0 ? 'text-[#5CF2C7]' : 'text-red-300';
+      html += '<div class="rounded-2xl border ' + (i === 0 ? 'border-[#5CF2C7]/50 bg-[#5CF2C7]/[.05]' : 'border-white/10 bg-white/[.02]') + ' p-4">' +
+        '<div class="flex items-center gap-3">' +
+          '<span class="w-8 text-center">' + medal + '</span>' +
+          '<div class="flex-1 min-w-0"><p class="font-bold truncate">' + esc(r.card.name) + '</p>' +
+          '<p class="text-xs text-slate-400">' + formatMoney(r.grossAnnual, 0) + ' rewards − ' + formatMoney(r.card.annualFee, 0) + ' fee</p></div>' +
+          '<p class="text-lg font-black ' + netCls + '">' + formatMoney(r.netAnnual, 0) + '<span class="text-xs font-semibold text-slate-400">/yr</span></p>' +
+        '</div>' +
+        '<div class="mt-2 h-2 rounded-full bg-white/10 overflow-hidden"><div class="rank-bar h-full rounded-full bg-gradient-to-r from-[#B48CFF] to-[#5CF2C7]" style="width:' + w + '%"></div></div>' +
+      '</div>';
+    }
+    box.innerHTML = html;
+  }
+
+  /* ---------- breakeven ---------- */
+
+  function fillBreakevenSelects() {
+    var cardSel = $('be-card'), baseSel = $('be-base');
+    var prevCard = cardSel.value, prevBase = baseSel.value;
+    cardSel.innerHTML = ''; baseSel.innerHTML = '';
+    var ranked = rankCards(state.cards, state.spend);
+    var freeCards = [];
+    for (var i = 0; i < state.cards.length; i++) {
+      var c = normalizeCard(state.cards[i]);
+      var o1 = document.createElement('option');
+      o1.value = c.id; o1.textContent = c.name + (c.annualFee > 0 ? ' (' + formatMoney(c.annualFee, 0) + ' fee)' : ' (no fee)');
+      cardSel.appendChild(o1);
+      if (c.annualFee === 0) {
+        var o2 = document.createElement('option');
+        o2.value = c.id; o2.textContent = c.name;
+        baseSel.appendChild(o2);
+        freeCards.push(c.id);
+      }
+    }
+    if (!state.cards.length) {
+      cardSel.innerHTML = '<option value="">— no cards —</option>';
+      baseSel.innerHTML = '<option value="">— no cards —</option>';
+      return;
+    }
+    // default fee card: highest-fee card; default baseline: best free card
+    var feeCards = state.cards.slice().sort(function (a, b) { return normalizeCard(b).annualFee - normalizeCard(a).annualFee; });
+    var defCard = feeCards[0].id;
+    var defBase = freeCards.length ? freeCards[0] : state.cards[0].id;
+    for (var r = 0; r < ranked.length; r++) {
+      if (freeCards.indexOf(ranked[r].card.id) !== -1) { defBase = ranked[r].card.id; break; }
+    }
+    cardSel.value = getCard(prevCard) ? prevCard : defCard;
+    baseSel.value = getCard(prevBase) ? prevBase : defBase;
+  }
+
+  function renderBreakeven() {
+    fillBreakevenSelects();
+    var box = $('breakeven-verdict');
+    var card = getCard($('be-card').value);
+    var base = getCard($('be-base').value);
+    if (!card || !base) { box.innerHTML = '<p class="text-slate-400">Add at least one card to run the fee check.</p>'; return; }
+    if (card.id === base.id) { box.innerHTML = '<p class="text-slate-400">Pick two different cards to compare.</p>'; return; }
+    var r = breakevenAnalysis(card, base, state.spend);
+    var cur = formatMoney(r.currentMonthly, 0);
+    var html = '';
+    if (r.status === 'no_spend') {
+      html = '<p class="text-slate-300">Set your monthly spend above to run the breakeven math.</p>';
+    } else if (r.status === 'never') {
+      html = '<p class="text-2xl mb-2">⚠️</p><p class="text-white font-semibold">Not worth it.</p>' +
+        '<p class="text-slate-300 mt-1"><strong class="text-white">' + esc(r.cardName) + '</strong> never beats <strong class="text-white">' + esc(r.baselineName) + '</strong> — even at 60× your current spend. The ' + formatMoney(r.cardFee, 0) + ' annual fee is pure loss on this spending mix.</p>';
+    } else if (r.status === 'already') {
+      var atAny = r.breakevenMonthly === 0;
+      html = '<p class="text-2xl mb-2">✅</p><p class="text-white font-semibold">The fee already pays for itself.</p>' +
+        '<p class="text-slate-300 mt-1"><strong class="text-white">' + esc(r.cardName) + '</strong> beats <strong class="text-white">' + esc(r.baselineName) + '</strong> ' +
+        (atAny ? 'at any spend level' : 'from ' + formatMoney(r.breakevenMonthly, 0) + '/mo onward') +
+        ' — and you spend ' + cur + '/mo. The ' + formatMoney(r.cardFee, 0) + ' fee is money well spent.</p>';
+    } else {
+      html = '<p class="text-2xl mb-2">💡</p><p class="text-white font-semibold">Worth it — once you spend enough.</p>' +
+        '<p class="text-slate-300 mt-1"><strong class="text-white">' + esc(r.cardName) + '</strong> pays for its ' + formatMoney(r.cardFee, 0) + ' fee once your total monthly spend reaches <strong class="text-[#5CF2C7]">' + formatMoney(r.breakevenMonthly, 0) + '/mo</strong> (same category mix). You currently spend ' + cur + '/mo.</p>';
+    }
+    if (r.flipsBack && (r.status === 'pays_off_at' || r.status === 'already')) {
+      html += '<p class="mt-3 text-xs text-amber-200/80">Note: this card has bonus-rate caps, so at very high spend the lead can flip back — the breakeven above is the first crossing point.</p>';
+    }
+    box.innerHTML = html;
+  }
+
+  /* ---------- combo optimizer ---------- */
+
+  function renderCombo() {
+    var box = $('combo-result');
+    if (!state.comboRun) return;
+    var res = bestTwoCardCombo(state.cards, state.spend);
+    if (!res) { box.innerHTML = '<p class="text-slate-400 text-sm">Add at least one card to run the optimizer.</p>'; return; }
+    var cats = perkCategories();
+    var rows = '';
+    for (var i = 0; i < cats.length; i++) {
+      var a = res.allocation[cats[i].key];
+      rows += '<tr class="border-t border-white/5"><td class="py-2 pr-2 text-sm">' + cats[i].icon + ' ' + esc(cats[i].label) + '</td>' +
+        '<td class="py-2 pr-2 text-sm font-semibold" style="color:' + esc(getCard(a.cardId) ? normalizeCard(getCard(a.cardId)).color : '#fff') + '">' + esc(a.cardName) + '</td>' +
+        '<td class="py-2 pr-2 text-sm text-right text-slate-300">' + formatPct(a.rate) + '</td>' +
+        '<td class="py-2 text-sm text-right text-[#5CF2C7] font-bold">' + formatMoney(a.rewardsAnnual, 0) + '</td></tr>';
+    }
+    var pairHtml = '';
+    for (var p = 0; p < res.cards.length; p++) {
+      var cc = res.cards[p];
+      pairHtml += '<div class="rounded-2xl p-4 w-56 shrink-0" style="background:linear-gradient(135deg,' + esc(cc.color) + ' 0%,' + esc(cc.color) + '55 60%,#1C1930 130%)">' +
+        '<div class="cc-chip mb-2"></div>' +
+        '<p class="font-extrabold text-white truncate">' + esc(cc.name) + '</p>' +
+        '<p class="text-xs text-white/80">' + (cc.annualFee > 0 ? formatMoney(cc.annualFee, 0) + ' annual fee' : 'No annual fee') + '</p></div>';
+    }
+    var uplift = res.isPair
+      ? '<p class="mt-3 text-sm text-slate-300">That is <strong class="text-[#5CF2C7]">' + formatMoney(res.comboBeatsSingleBy, 0) + '/yr</strong> more than your best single card (' + esc(res.bestSingle.card.name) + ' at ' + formatMoney(res.bestSingle.netAnnual, 0) + '/yr).</p>'
+      : '<p class="mt-3 text-sm text-slate-300">Add a second card to unlock pair combinations.</p>';
+    box.innerHTML =
+      '<div class="rounded-2xl border border-[#5CF2C7]/30 bg-white/[.02] p-5">' +
+        '<p class="text-xs font-bold uppercase tracking-widest text-[#5CF2C7]">' + (res.isPair ? 'Winning pair' : 'Your card') + '</p>' +
+        '<div class="mt-3 flex flex-wrap gap-3">' + pairHtml + '</div>' +
+        '<div class="mt-4 flex flex-wrap gap-6 text-sm">' +
+          '<p>Combined gross <strong class="text-white">' + formatMoney(res.grossAnnual, 0) + '/yr</strong></p>' +
+          '<p>Fees <strong class="text-white">' + formatMoney(res.feesAnnual, 0) + '/yr</strong></p>' +
+          '<p>Net value <strong class="text-[#5CF2C7] text-lg">' + formatMoney(res.netAnnual, 0) + '/yr</strong></p>' +
+        '</div>' + uplift +
+        '<div class="mt-4 overflow-x-auto"><table class="w-full min-w-[440px]">' +
+          '<thead><tr class="text-left text-[11px] uppercase tracking-widest text-slate-500"><th class="py-1 pr-2">Category</th><th class="py-1 pr-2">Use this card</th><th class="py-1 pr-2 text-right">Rate</th><th class="py-1 text-right">Rewards/yr</th></tr></thead>' +
+          '<tbody>' + rows + '</tbody></table></div>' +
+      '</div>';
+  }
+
+  /* ---------- add / edit form ---------- */
+
+  function buildRateInputs() {
+    var wrap = $('f-rates');
+    var cats = perkCategories();
+    var html = '';
+    for (var i = 0; i < cats.length; i++) {
+      html += '<label class="block"><span class="text-xs text-slate-400">' + cats[i].icon + ' ' + esc(cats[i].label) + ' (%)</span>' +
+        '<input id="f-rate-' + cats[i].key + '" type="number" min="0" max="50" step="0.5" class="num-input mt-1" placeholder="1"></label>';
+    }
+    wrap.innerHTML = html;
+    var cw = $('f-colors');
+    var ch = '';
+    for (var j = 0; j < COLORS.length; j++) {
+      ch += '<span class="swatch' + (COLORS[j] === state.formColor ? ' on' : '') + '" data-color="' + COLORS[j] + '" style="background:' + COLORS[j] + '" role="radio" aria-label="color ' + COLORS[j] + '"></span>';
+    }
+    cw.innerHTML = ch;
+    var sw = cw.querySelectorAll('.swatch');
+    for (var k = 0; k < sw.length; k++) {
+      sw[k].addEventListener('click', function () {
+        state.formColor = this.getAttribute('data-color');
+        var all = cw.querySelectorAll('.swatch');
+        for (var m = 0; m < all.length; m++) all[m].classList.remove('on');
+        this.classList.add('on');
+      });
+    }
+  }
+
+  function openForm(editId) {
+    state.editingId = editId || null;
+    var card = editId ? getCard(editId) : null;
+    var c = card ? normalizeCard(card) : newBlankCard();
+    $('card-form-title').textContent = card ? 'Edit card' : 'Add a new card';
+    $('f-name').value = card ? c.name : '';
+    $('f-fee').value = card ? c.annualFee : '';
+    var cats = perkCategories();
+    for (var i = 0; i < cats.length; i++) $('f-rate-' + cats[i].key).value = card ? c.rates[cats[i].key] : '';
+    $('f-cap-dining').value = c.caps.dining || '';
+    $('f-cap-groceries').value = c.caps.groceries || '';
+    $('f-cap-travel').value = c.caps.travel || '';
+    state.formColor = c.color || COLORS[0];
+    var sw = $('f-colors').querySelectorAll('.swatch');
+    for (var j = 0; j < sw.length; j++) sw[j].classList.toggle('on', sw[j].getAttribute('data-color') === state.formColor);
+    $('form-errors').classList.add('hidden');
+    $('card-form-wrap').classList.remove('hidden');
+    $('card-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('f-name').focus();
+  }
+
+  function closeForm() {
+    $('card-form-wrap').classList.add('hidden');
+    state.editingId = null;
+  }
+
+  function saveForm() {
+    var cats = perkCategories();
+    var rates = {};
+    for (var i = 0; i < cats.length; i++) {
+      var v = $('f-rate-' + cats[i].key).value;
+      rates[cats[i].key] = v === '' ? 0 : Number(v);
+    }
+    function capVal(id) {
+      var v = $(id).value;
+      return v === '' ? undefined : Number(v);
+    }
+    var card = {
+      id: state.editingId || uid(),
+      name: $('f-name').value.trim(),
+      annualFee: $('f-fee').value === '' ? 0 : Number($('f-fee').value),
+      rates: rates,
+      caps: { dining: capVal('f-cap-dining'), groceries: capVal('f-cap-groceries'), travel: capVal('f-cap-travel') },
+      color: state.formColor
+    };
+    var errs = validateCard(card);
+    var errBox = $('form-errors');
+    if (errs.length) {
+      errBox.innerHTML = '<ul class="list-disc pl-5 space-y-1">' + errs.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>';
+      errBox.classList.remove('hidden');
+      return;
+    }
+    errBox.classList.add('hidden');
+    if (state.editingId) {
+      for (var j = 0; j < state.cards.length; j++) {
+        if (state.cards[j].id === state.editingId) { state.cards[j] = card; break; }
+      }
+    } else {
+      state.cards.push(card);
+      state.selectedId = card.id;
+    }
+    saveCards();
+    closeForm();
+    renderResults();
+  }
+
+  function deleteCard(id) {
+    var card = getCard(id);
+    if (!card) return;
+    if (!confirm('Delete "' + card.name + '" from your wallet?')) return;
+    state.cards = state.cards.filter(function (c) { return c.id !== id; });
+    if (state.selectedId === id) state.selectedId = state.cards.length ? state.cards[0].id : null;
+    saveCards();
+    renderResults();
+  }
+
+  /* ---------- master render ---------- */
+
+  function renderResults() {
+    renderFan();
+    renderCardDetail();
+    renderCardList();
+    renderRanking();
+    renderBreakeven();
+    renderCombo();
+  }
+
+  function init() {
+    loadState();
+    buildSliders();
+    buildRateInputs();
+    bindPresets();
+    renderResults();
+    $('btn-add-card').addEventListener('click', function () { openForm(null); });
+    $('btn-cancel-card').addEventListener('click', closeForm);
+    $('btn-save-card').addEventListener('click', saveForm);
+    $('btn-reset-cards').addEventListener('click', function () {
+      if (!confirm('Replace your wallet with the starter cards?')) return;
+      state.cards = starterCards();
+      state.selectedId = state.cards[0].id;
+      saveCards();
+      renderResults();
+    });
+    $('be-card').addEventListener('change', renderBreakeven);
+    $('be-base').addEventListener('change', renderBreakeven);
+    $('btn-combo').addEventListener('click', function () { state.comboRun = true; renderCombo(); $('combo-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+</body>
+</html>
